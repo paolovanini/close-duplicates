@@ -1,0 +1,33 @@
+{
+  "name": "close-duplicates",
+  "version": "0.2.0",
+  "description": "Obsidian plugin that adds context menu commands to close duplicate notes",
+  "license": "ISC",
+  "author": "Paolo Vanini",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write .",
+    "version": "node version-bump.mjs",
+    "publish": "npm run build && npm run version && node push-to-github.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@types/node": "^25.5.0",
+    "esbuild": "0.27.4",
+    "eslint": "^9.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-obsidianmd": "0.1.9",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.2"
+  },
+  "dependencies": {
+    "obsidian": "^1.12.3"
+  }
+}
