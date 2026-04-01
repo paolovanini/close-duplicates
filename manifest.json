@@ -1,7 +1,7 @@
 {
 	"id": "close-duplicates",
 	"name": "Close Duplicates",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"minAppVersion": "1.12.7",
 	"description": "Add context menu to close duplicate notes",
 	"isDesktopOnly": false
