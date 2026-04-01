@@ -1,6 +1,12 @@
-.duplicate-group-1 {
+.duplicate-group-1_OLD {
   color: #1e3a8a;
   background-color: #dbeafe;
+}
+
+.duplicate-group-1 {
+  border: #dbeafe;
+  border-left-style: dotted;
+  padding-left: 4px;
 }
 
 .duplicate-group-2 {

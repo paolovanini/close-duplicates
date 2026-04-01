@@ -1,4 +1,10 @@
-import { Plugin, WorkspaceLeaf, TFile, Notice } from "obsidian";
+import { Plugin, TFile, Notice } from "obsidian";
+import {
+  CloseDuplicatesPluginSettings,
+  CloseDuplicatesPluginSettingTab,
+  DEFAULT_SETTINGS,
+} from "./settings.js";
+import { Highlighter } from "./highlighter.js";
 
 /* extended WorkspaceLeaf because 'tabHeaderEl' and 'tabHeaderInnerTitleEl' practically exist but they are not in type definition file */
 declare module "obsidian" {
@@ -9,20 +15,35 @@ declare module "obsidian" {
 }
 
 export default class CloseDuplicatesPlugin extends Plugin {
+  settings!: CloseDuplicatesPluginSettings;
   commands = {
     close_only_duplicates: "Close only duplicates",
     close_all_duplicates: "Close all duplicates",
   };
-
   duplicateIcon = "copy-x";
-  highlightCssClassNamePrefix = "duplicate-group-";
+  highlighter?: Highlighter;
 
+  /* Public Methods */
   async onload() {
+    this.highlighter = new Highlighter(this.app);
+
+    await this.loadSettings();
+    this.addSettingTab(new CloseDuplicatesPluginSettingTab(this.app, this));
+
     this.addContextMenuCommands();
     this.addHighlightDuplicatesHandling();
   }
 
-  addContextMenuCommands() {
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
+
+  /* Private Methods */
+  private addContextMenuCommands() {
     this.registerEvent(
       this.app.workspace.on("file-menu", (menu, file) => {
         if (!(file instanceof TFile)) {
@@ -52,83 +73,19 @@ export default class CloseDuplicatesPlugin extends Plugin {
     );
   }
 
-  addHighlightDuplicatesHandling() {
+  private addHighlightDuplicatesHandling() {
     this.registerEvent(
       this.app.workspace.on("layout-change", () => {
-        new Notice("layout-change");
-        this.highlightDuplicates();
+        new Notice("layout-change"); // TODO: remove
+        if (this.settings?.isHighlightEnabled && this.highlighter) {
+          this.highlighter.highlightDuplicates();
+        }
       }),
     );
   }
 
-  highlightDuplicates() {
-    new Notice("highlightDuplicates");
-    const leaves = this.getAllOpenNotes();
-
-    // reset to default
-    for (const leaf of leaves) {
-      // const tabHeader = leaf.tabHeaderEl;
-      // if (tabHeader) {
-      //   tabHeader.classList.forEach((cls) => {
-      //     if (cls.startsWith(this.highlightCssClassNamePrefix)) {
-      //       tabHeader.classList.remove(cls);
-      //     }
-      //   });
-      // }
-      const titleEl = leaf.tabHeaderInnerTitleEl;
-      if (titleEl) {
-        titleEl.classList.forEach((cls) => {
-          if (cls.startsWith(this.highlightCssClassNamePrefix)) {
-            titleEl.classList.remove(cls);
-          }
-        });
-      }
-    }
-
-    // create groups of duplicates
-    const groups = new Map<string, WorkspaceLeaf[]>();
-    for (const leaf of leaves) {
-      const state = leaf.getViewState();
-      const file = state.state ? (state.state.file as string) : null;
-      if (!file) {
-        continue;
-      }
-      if (!groups.has(file)) {
-        groups.set(file, []);
-      }
-      groups.get(file)?.push(leaf);
-    }
-
-    // highlight groups of duplicates
-    let colorIndex = 1;
-    for (const leaves of groups.values()) {
-      console.log("leaves: " + leaves.length);
-      if (leaves.length <= 1) {
-        continue;
-      }
-      for (const leaf of leaves) {
-        // const tabHeader = leaf.tabHeaderEl;
-        // if (tabHeader) {
-        //   tabHeader.classList.add(this.cssClassName);
-        // }
-        const titleEl = leaf.tabHeaderInnerTitleEl;
-        if (titleEl) {
-          titleEl.classList.add(this.highlightCssClassNamePrefix + colorIndex);
-        }
-      }
-
-      colorIndex++;
-    }
-  }
-
-  getAllOpenNotes(): WorkspaceLeaf[] {
+  private closeAllDuplicates(file: TFile) {
     const leaves = this.app.workspace.getLeavesOfType("markdown");
-    console.log("getAllOpenNotes: " + leaves.length);
-    return leaves;
-  }
-
-  closeAllDuplicates(file: TFile) {
-    const leaves = this.getAllOpenNotes();
     for (const leaf of leaves) {
       const state = leaf.getViewState();
       if (state.state?.file === file.path) {
@@ -137,8 +94,8 @@ export default class CloseDuplicatesPlugin extends Plugin {
     }
   }
 
-  closeOnlyDuplicates(file: TFile) {
-    const leaves = this.getAllOpenNotes();
+  private closeOnlyDuplicates(file: TFile) {
+    const leaves = this.app.workspace.getLeavesOfType("markdown");
     const active = this.app.workspace.getMostRecentLeaf();
     for (const leaf of leaves) {
       const state = leaf.getViewState();
