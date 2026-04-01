@@ -1,3 +1,6 @@
 {
-  "isHighlightEnabled": true
+  "isHighlightEnabled": true,
+  "isHighlightBorderEnabled": true,
+  "isHighlightNameEnabled": true,
+  "maxNumberOfcolors": 10
 }

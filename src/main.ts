@@ -25,12 +25,11 @@ export default class CloseDuplicatesPlugin extends Plugin {
 
   /* Public Methods */
   async onload() {
-    this.highlighter = new Highlighter(this.app);
-
     await this.loadSettings();
     this.addSettingTab(new CloseDuplicatesPluginSettingTab(this.app, this));
 
     this.addContextMenuCommands();
+
     this.addHighlightDuplicatesHandling();
   }
 
@@ -74,9 +73,9 @@ export default class CloseDuplicatesPlugin extends Plugin {
   }
 
   private addHighlightDuplicatesHandling() {
+    this.highlighter = new Highlighter(this.app, this.settings);
     this.registerEvent(
       this.app.workspace.on("layout-change", () => {
-        new Notice("layout-change"); // TODO: remove
         if (this.settings?.isHighlightEnabled && this.highlighter) {
           this.highlighter.highlightDuplicates();
         }

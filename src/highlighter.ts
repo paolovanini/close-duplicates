@@ -1,30 +1,31 @@
 import { App, WorkspaceLeaf } from "obsidian";
+import { CloseDuplicatesPluginSettings } from "./settings.js";
 
 export class Highlighter {
   private app: App;
+  private settings!: CloseDuplicatesPluginSettings;
 
-  constructor(app: App) {
+  constructor(app: App, settings: CloseDuplicatesPluginSettings) {
     this.app = app;
+    this.settings = settings;
   }
 
-  highlightCssClassNamePrefix = "duplicate-group-";
+  nameHighlightCssClassPrefix = "duplicate-group-name-";
+  borderHighlightCssClassPrefix = "duplicate-group-border-";
 
   /* Public Methods */
-  removeHighlightToDuplicates() {
+  removeHighlightFromDuplicates() {
     const leaves = this.app.workspace.getLeavesOfType("markdown");
     for (const leaf of leaves) {
-      // const tabHeader = leaf.tabHeaderEl;
-      // if (tabHeader) {
-      //   tabHeader.classList.forEach((cls) => {
-      //     if (cls.startsWith(this.highlightCssClassNamePrefix)) {
-      //       tabHeader.classList.remove(cls);
-      //     }
-      //   });
-      // }
       const titleEl = leaf.tabHeaderInnerTitleEl;
       if (titleEl) {
         titleEl.classList.forEach((cls) => {
-          if (cls.startsWith(this.highlightCssClassNamePrefix)) {
+          if (cls.startsWith(this.borderHighlightCssClassPrefix)) {
+            titleEl.classList.remove(cls);
+          }
+        });
+        titleEl.classList.forEach((cls) => {
+          if (cls.startsWith(this.nameHighlightCssClassPrefix)) {
             titleEl.classList.remove(cls);
           }
         });
@@ -33,7 +34,7 @@ export class Highlighter {
   }
 
   highlightDuplicates() {
-    this.removeHighlightToDuplicates();
+    this.removeHighlightFromDuplicates();
     const leaves = this.app.workspace.getLeavesOfType("markdown");
     const groups = this.groupDuplicates(leaves);
     this.addHighlight(groups);
@@ -63,22 +64,30 @@ export class Highlighter {
   private addHighlight(groups: Map<string, WorkspaceLeaf[]>) {
     let colorIndex = 1;
     for (const leaves of groups.values()) {
-      console.log("leaves: " + leaves.length);
       if (leaves.length <= 1) {
         continue;
       }
+
       for (const leaf of leaves) {
-        // const tabHeader = leaf.tabHeaderEl;
-        // if (tabHeader) {
-        //   tabHeader.classList.add(this.cssClassName);
-        // }
         const titleEl = leaf.tabHeaderInnerTitleEl;
         if (titleEl) {
-          titleEl.classList.add(this.highlightCssClassNamePrefix + colorIndex);
+          if (this.settings.isHighlightNameEnabled) {
+            titleEl.classList.add(
+              this.nameHighlightCssClassPrefix + colorIndex,
+            );
+          }
+          if (this.settings.isHighlightBorderEnabled) {
+            titleEl.classList.add(
+              this.borderHighlightCssClassPrefix + colorIndex,
+            );
+          }
         }
       }
 
       colorIndex++;
+      if (colorIndex > this.settings.maxNumberOfcolors) {
+        colorIndex = 1;
+      }
     }
   }
 }

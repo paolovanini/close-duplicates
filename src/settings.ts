@@ -2,13 +2,17 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import CloseDuplicatesPlugin from "./main.js";
 
 export interface CloseDuplicatesPluginSettings {
-  //sampleValue: string;
   isHighlightEnabled: boolean;
+  isHighlightBorderEnabled: boolean;
+  isHighlightNameEnabled: boolean;
+  maxNumberOfcolors: number;
 }
 
 export const DEFAULT_SETTINGS: Partial<CloseDuplicatesPluginSettings> = {
-  //   sampleValue: "default",
   isHighlightEnabled: true,
+  isHighlightBorderEnabled: true,
+  isHighlightNameEnabled: true,
+  maxNumberOfcolors: 10,
 };
 
 export class CloseDuplicatesPluginSettingTab extends PluginSettingTab {
@@ -32,24 +36,39 @@ export class CloseDuplicatesPluginSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.isHighlightEnabled = value;
             await this.plugin.saveSettings();
-            if (this.plugin.settings.isHighlightEnabled) {
-              this.plugin.highlighter?.highlightDuplicates();
-            } else {
-              this.plugin.highlighter?.removeHighlightToDuplicates();
-            }
-
             this.display();
+            this.updateHighlight();
           }),
       );
 
-    // new Setting(containerEl).setName("Default value").addText((text) =>
-    //   text
-    //     .setPlaceholder("Lorem ipsum")
-    //     .setValue(this.plugin.settings.sampleValue)
-    //     .onChange(async (value) => {
-    //       this.plugin.settings.sampleValue = value;
-    //       await this.plugin.saveSettings();
-    //     }),
-    // );
+    new Setting(containerEl).setName("Highlight Border").addToggle((toggle) =>
+      toggle
+        .setValue(this.plugin.settings.isHighlightBorderEnabled)
+        .onChange(async (value) => {
+          this.plugin.settings.isHighlightBorderEnabled = value;
+          await this.plugin.saveSettings();
+          this.display();
+          this.updateHighlight();
+        }),
+    );
+
+    new Setting(containerEl).setName("Highlight Name").addToggle((toggle) =>
+      toggle
+        .setValue(this.plugin.settings.isHighlightNameEnabled)
+        .onChange(async (value) => {
+          this.plugin.settings.isHighlightNameEnabled = value;
+          await this.plugin.saveSettings();
+          this.display();
+          this.updateHighlight();
+        }),
+    );
+  }
+
+  updateHighlight() {
+    if (this.plugin.settings.isHighlightEnabled) {
+      this.plugin.highlighter?.highlightDuplicates();
+    } else {
+      this.plugin.highlighter?.removeHighlightFromDuplicates();
+    }
   }
 }
